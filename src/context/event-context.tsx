@@ -156,8 +156,24 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       setAuthLoading(false);
     });
-    // Pick up result if user was redirected back from Google
-    getRedirectResult(auth).catch(() => {/* no redirect pending */});
+    // Handle redirect result from Google sign-in
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user && typeof window !== "undefined") {
+          // After successful sign-in, navigate to stored room or control
+          const storedRoom = localStorage.getItem("hackpulse-active-room");
+          const dest = localStorage.getItem("hackpulse-signin-dest");
+          localStorage.removeItem("hackpulse-signin-dest");
+          if (dest) {
+            window.location.href = dest;
+          } else if (storedRoom) {
+            window.location.href = `/event/${storedRoom}`;
+          } else {
+            window.location.href = "/control";
+          }
+        }
+      })
+      .catch(() => {/* no redirect pending */});
     return unsubscribe;
   }, []);
 
