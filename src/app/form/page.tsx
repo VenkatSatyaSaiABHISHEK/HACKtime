@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from "react";
 import { useEvent, FormQuestion } from "@/context/event-context";
 import { DashboardLayout } from "@/components/dashboard-layout";

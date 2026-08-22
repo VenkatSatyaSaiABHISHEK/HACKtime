@@ -14,7 +14,8 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   User
@@ -155,6 +156,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       setAuthLoading(false);
     });
+    // Pick up result if user was redirected back from Google
+    getRedirectResult(auth).catch(() => {/* no redirect pending */});
     return unsubscribe;
   }, []);
 
@@ -166,7 +169,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   // Google Authentication actions
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
     } catch (e) {
       console.error("Google sign in failed", e);
     }

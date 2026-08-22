@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useRef } from "react";
 import { useEvent, Participant } from "@/context/event-context";
 import { DashboardLayout } from "@/components/dashboard-layout";
