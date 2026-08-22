@@ -10,7 +10,6 @@ import {
   AlignLeft,
   BarChart2,
   ChevronLeft,
-  Search,
   Users,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,7 +33,6 @@ export default function SubmitProgressPage() {
   const [currentCard, setCurrentCard] = useState(0);
   const [direction, setDirection] = useState(1);
   const [selectedTeam, setSelectedTeam] = useState("");
-  const [teamSearch, setTeamSearch] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -106,7 +104,6 @@ export default function SubmitProgressPage() {
     setAnswers({});
     setCurrentCard(0);
     setDirection(1);
-    setTeamSearch("");
   };
 
   const isLastCard = currentCard === totalCards - 1;
@@ -248,27 +245,9 @@ export default function SubmitProgressPage() {
                   <p className="text-sm text-gray-600">Pick your team from the list below.</p>
                 </div>
 
-                {/* Search */}
-                <div className="relative mt-2">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-700" />
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Search teams…"
-                    value={teamSearch}
-                    onChange={(e) => setTeamSearch(e.target.value)}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-gray-700 focus:outline-none focus:border-purple-600/50 focus:bg-white/[0.06] transition-all"
-                  />
-                </div>
-
                 {/* Team list */}
-                <div className="space-y-2 max-h-44 sm:max-h-56 overflow-y-auto pr-0.5 mt-1">
-                  {uniqueTeams
-                    .filter((t) =>
-                      t.team.toLowerCase().includes(teamSearch.toLowerCase()) ||
-                      (t.teamNumber || "").includes(teamSearch)
-                    )
-                    .map((t) => {
+                <div className="space-y-2 max-h-52 sm:max-h-64 overflow-y-auto pr-0.5">
+                  {uniqueTeams.map((t) => {
                       const sel = selectedTeam === t.team;
                       return (
                         <button
@@ -293,13 +272,10 @@ export default function SubmitProgressPage() {
                         </button>
                       );
                     })}
-                  {uniqueTeams.filter((t) =>
-                    t.team.toLowerCase().includes(teamSearch.toLowerCase()) ||
-                    (t.teamNumber || "").includes(teamSearch)
-                  ).length === 0 && (
+                  {uniqueTeams.length === 0 && (
                     <div className="flex flex-col items-center gap-2 py-8 text-gray-700">
                       <Users className="w-5 h-5" />
-                      <p className="text-xs font-mono">No teams found</p>
+                      <p className="text-xs font-mono">No teams available</p>
                     </div>
                   )}
                 </div>
