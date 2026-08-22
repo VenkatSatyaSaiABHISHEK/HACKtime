@@ -37,6 +37,8 @@ export default function SubmitProgressPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // Per-device one-submission enforcement
+  const [alreadySubmitted, setAlreadySubmitted] = useState<{ team: string; time: string } | null>(null);
 
   useEffect(() => {
     if (roomParam) {
@@ -48,6 +50,16 @@ export default function SubmitProgressPage() {
   useEffect(() => {
     if (formConfig !== undefined) setLoaded(true);
   }, [formConfig]);
+
+  // Check if this device already submitted for this room
+  useEffect(() => {
+    if (!roomParam) return;
+    try {
+      const key = `hackpulse-submitted-${roomParam.toUpperCase()}`;
+      const stored = localStorage.getItem(key);
+      if (stored) setAlreadySubmitted(JSON.parse(stored));
+    } catch {}
+  }, [roomParam]);
 
   const uniqueTeams = Array.from(
     new Map(participants.filter((p) => p.team).map((p) => [p.team, p])).values()
@@ -90,6 +102,13 @@ export default function SubmitProgressPage() {
         if (q.type === "progress" && !finalAnswers[q.id]) finalAnswers[q.id] = "50";
       });
       await submitFormResponse(selectedTeam, teamNumber, "", 0, finalAnswers);
+      // Save submission record to localStorage
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
+      const record = { team: selectedTeam, time: timeStr };
+      try {
+        localStorage.setItem(`hackpulse-submitted-${(roomParam || roomCode || "").toUpperCase()}`, JSON.stringify(record));
+      } catch {}
       setSubmitSuccess(true);
     } catch (err) {
       console.error("Submit failed:", err);
@@ -109,7 +128,41 @@ export default function SubmitProgressPage() {
   const isLastCard = currentCard === totalCards - 1;
   const progress = Math.round((currentCard / totalCards) * 100);
 
-  // ── Loading ──
+  // ── Already submitted (device lock) ──
+  const submittedRecord = alreadySubmitted ?? (submitSuccess ? { team: selectedTeam, time: (() => { const n = new Date(); return `${n.getHours().toString().padStart(2,"0")}:${n.getMinutes().toString().padStart(2,"0")}`; })() } : null);
+  if (submittedRecord && loaded) {
+    return (
+      <div className="min-h-screen bg-[#060608] flex items-center justify-center px-4 font-sans">
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-sm w-full"
+        >
+          <div className="relative bg-[#0d0d10] border border-white/[0.07] rounded-3xl p-10 text-center space-y-6 shadow-2xl shadow-black/50">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-green-600/30 to-transparent rounded-t-3xl" />
+            {/* Icon */}
+            <div className="relative w-20 h-20 mx-auto">
+              <div className="absolute inset-0 rounded-full bg-green-500/10 border border-green-500/20 animate-ping" style={{ animationDuration: "3s" }} />
+              <div className="relative w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                <CheckCircle className="w-9 h-9 text-green-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] font-mono text-green-500 uppercase tracking-widest">Already submitted</p>
+              <h2 className="text-2xl font-black text-white">You&apos;re all set!</h2>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                <span className="text-purple-400 font-semibold">{submittedRecord.team}</span> submitted at {submittedRecord.time}. The organizers can see your progress.
+              </p>
+            </div>
+            <div className="pt-1 border-t border-white/[0.05] text-[10px] font-mono text-gray-700">
+              Each device can only submit once per session.
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
   if (!loaded && !submitSuccess) {
     return (
       <div className="min-h-screen bg-[#060608] flex items-center justify-center font-sans">
